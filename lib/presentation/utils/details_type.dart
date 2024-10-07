@@ -1,0 +1,4 @@
+enum DetailsType {
+  call,
+  home
+}

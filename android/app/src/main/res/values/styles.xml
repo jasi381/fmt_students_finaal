@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+<!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
+<style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">1000</item>
+    <item name="android:windowSplashScreenBackground" tools:targetApi="s">#FA7E48</item>
+    <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">
+        @mipmap/ic_launcher
+    </item>
+</style>
+
+<style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <item name="android:windowBackground">?android:colorBackground</item>
+    <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">1000</item>
+    <item name="android:windowSplashScreenBackground" tools:targetApi="s">#FA7E48</item>
+    <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">
+        @mipmap/ic_launcher
+    </item>
+</style>
+</resources>

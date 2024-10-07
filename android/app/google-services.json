@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "954728949810",
+    "project_id": "find-my-tuition",
+    "storage_bucket": "find-my-tuition.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954728949810:android:d1b04ea723e2d4bde2b42b",
+        "android_client_info": {
+          "package_name": "com.fmt.students"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA68MEVgz-PMl-yg5zRs5-otXhT9oajMhE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
