@@ -15,7 +15,8 @@ class Constants {
   static const appBarColor = Color(0xffFA7e48);
   static const appBarContentColor = Color(0xffffffff);
 
-  static const String appSign = '49aa5698ce98b82b3dd784484580a867e3c84da80326cc89ee648386873df14e';
-  static const int appID = 1081254456;
+  static const String appSign = '9e143c80996d8d5a6b1f4ee0065df6a3c7fee7544f606d063158b51854080c10';
+  static const int appID = 403740809;
+
 
 }

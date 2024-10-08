@@ -50,14 +50,14 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('/Users/jasmeetsingh/AndroidStudioProjects/fmt_students/keystore')
+            storeFile file('/Users/jasmeetsingh/Desktop/fmt_students/keystore')
             storePassword 'jasmeet34'
             keyAlias 'release'
             keyPassword 'jasmeet34'
         }
     }
     namespace = "com.fmt.students"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = "26.1.10909125"
 
     compileOptions {

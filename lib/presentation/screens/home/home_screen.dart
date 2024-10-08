@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
@@ -37,6 +36,7 @@ import 'package:students/presentation/utils/shared_pref_helper.dart';
 import 'package:students/utils/constants.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
+import 'package:zego_zpns/zego_zpns.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onChatIconPressed;
@@ -66,210 +66,198 @@ class _HomeScreenState extends State<HomeScreen>
     _controller
         .repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeData();
+      // _initializeData();
     });
 
   }
 
-  Future<void> _initializeData() async {
-    final profileNumber = await SharedPreferencesHelper.getPhoneNumber();
-
-    if (profileNumber != null && mounted) {
-      await Provider.of<ProfileProvider>(context, listen: false)
-          .fetchStudentProfile(profileNumber);
-      await _initializeZegoService();
-    } else {
-      Fluttertoast.showToast(msg: "Something went wrong. Please try again later");
-    }
-  }
-
-
-  Future<void> _initializeZegoService() async {
-    final profile = Provider.of<ProfileProvider>(context, listen: false).studentProfileEntity;
-    ZegoCallData? currentCallData;
-    if (profile != null) {
-      try {
-        await ZegoUIKitPrebuiltCallInvitationService().init(
-          appID: Constants.appID,
-          appSign:  Constants.appSign,
-          userID: profile.studentProfile.email!,
-
-          userName:  profile.studentProfile.name!,
-          plugins: [ZegoUIKitSignalingPlugin()],
-          events: ZegoUIKitPrebuiltCallEvents(
-            onError:(ZegoUIKitError error){} ,
-            user: ZegoCallUserEvents(
-                onLeave:(ZegoUIKitUser user){
-                } ,
-                onEnter: (ZegoUIKitUser user){
-
-                }
-            ),
-            onCallEnd: (ZegoCallEndEvent event,  VoidCallback defaultAction,){
-              String teacherId = currentCallData?.invitees.isNotEmpty == true
-                  ? currentCallData!.invitees.first
-                  : '1';  // Default to '1' if no invitee
-
-              String callType = currentCallData?.callType??"voiceCall";
-              scheduleCall(
-                phone: profile.studentProfile.phone ?? '',
-                teacherId: teacherId,
-                date: DateTime.now().toString().split(' ')[0],
-                time: DateTime.now().toString().split(' ')[1].substring(0, 5),
-                callType: callType,
-              ).then((success) {
-                if (success) {
-                  Fluttertoast.showToast(
-                      msg: "Call ended successfully",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      timeInSecForIosWeb: 1,
-                      backgroundColor: Colors.green,
-                      textColor: Colors.white,
-                      fontSize: 16.0
-                  );
-                } else {
-                  Fluttertoast.showToast(
-                      msg: "Failed to end call",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      timeInSecForIosWeb: 1,
-                      backgroundColor: Colors.red,
-                      textColor: Colors.white,
-                      fontSize: 16.0
-                  );
-                }
-
-              }).catchError((onError){
-                Fluttertoast.showToast(
-                    msg: "Failed to end call: ${onError.toString()}",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    timeInSecForIosWeb: 1,
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    fontSize: 16.0
-                );
-              });
-              defaultAction();
-            },
-
-            // Modify your custom configurations here.
-            onHangUpConfirmation: (ZegoCallHangUpConfirmationEvent event,
-                /// defaultAction to return to the previous page
-                Future<bool> Function() defaultAction,
-                ) async {
-              return await showDialog(
-                context: event.context,
-                barrierDismissible: false,
-                builder: (BuildContext dialogContext) {
-                  return AlertDialog(
-                    backgroundColor: Colors.white,
-                    title:  Text("Confirm Disconnecting with teacher",
-                        style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w500,fontSize: 18)),
-                    content:  Text(
-                        "Are you sure do you want to end the call with teacher",
-                        style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w400,fontSize: 16)),
-                    actions: [
-                      TextButton(
-                        child:  Text("Cancel",
-                            style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w500,fontSize: 18)),
-                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                      ),
-                      TextButton(
-                        child: Text("Exit", style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w500, fontSize: 18)),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop(true);
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          requireConfig: (ZegoCallInvitationData data) {
-            currentCallData = ZegoCallData(
-                invitees: data.invitees.map((e) => e.id).toList(),
-                inviterName: data.inviter?.name,
-                callType:  data.type.name
-            );
-            var config = (data.invitees.length > 1)
-                ? ZegoCallInvitationType.videoCall == data.type
-                ? ZegoUIKitPrebuiltCallConfig.groupVideoCall()
-                : ZegoUIKitPrebuiltCallConfig.groupVoiceCall()
-                : ZegoCallInvitationType.videoCall == data.type
-                ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
-                : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
-
-
-            return config;
-          },
-          ringtoneConfig:  ZegoCallRingtoneConfig(
-            incomingCallPath: "assets/ringtone/ringer.mp3",
-            outgoingCallPath: "assets/ringtone/ringer.mp3",
-          ),
-          notificationConfig: ZegoCallInvitationNotificationConfig(
-            androidNotificationConfig: ZegoCallAndroidNotificationConfig(
-              callChannel: ZegoCallAndroidNotificationChannelConfig(
-                sound: "ringer"
-              ),
-            ),
-          ),
-        );
-
-        // Wait for the signaling plugin to connect
-        await ZegoUIKitSignalingPlugin().connectUser(
-          id: profile.studentProfile.email!,
-          name: profile.studentProfile.name!,
-        );
-      } catch (e) {
-        if (kDebugMode) {
-          print("Error initializing Zego service: $e");
-        }
-      }
-    }
-  }
-
-  Future<bool> scheduleCall({
-    required String phone,
-    required String teacherId,
-    required String date,
-    required String time,
-    required String callType,
-  }) async {
-
-    const String baseUrl = '${Constants.baseUrl}callschedule.php?API-Key=${Constants.apiKey}';
-
-
-    final Uri uri = Uri.parse(baseUrl);
-
-
-    try {
-      final response = await http.post(
-        uri,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'phone': phone,
-          'teacherid': teacherId,
-          'date': date,
-          'time': time,
-          'calltype': callType,
-        }),
-      );
-
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      return false;
-    }
-  }
+  // Future<void> _initializeData() async {
+  //   final profileNumber = await SharedPreferencesHelper.getPhoneNumber();
+  //
+  //   if (profileNumber != null && mounted) {
+  //     await Provider.of<ProfileProvider>(context, listen: false)
+  //         .fetchStudentProfile(profileNumber);
+  //     await _initializeZegoService();
+  //   } else {
+  //     Fluttertoast.showToast(msg: "Something went wrong. Please try again later");
+  //   }
+  // }
+  //
+  //
+  // Future<void> _initializeZegoService() async {
+  //   final profile = Provider.of<ProfileProvider>(context, listen: false).studentProfileEntity;
+  //   ZegoCallData? currentCallData;
+  //   if (profile != null) {
+  //     try {
+  //       await ZegoUIKitPrebuiltCallInvitationService().init(
+  //         appID: Constants.appID,
+  //         appSign:  Constants.appSign,
+  //         userID: profile.studentProfile.email!,
+  //         userName:  profile.studentProfile.name!,
+  //         plugins: [ZegoUIKitSignalingPlugin()],
+  //         events: ZegoUIKitPrebuiltCallEvents(
+  //           onError:(ZegoUIKitError error){} ,
+  //           // user: ZegoCallUserEvents(
+  //           //     onLeave:(ZegoUIKitUser user){
+  //           //     } ,
+  //           //     onEnter: (ZegoUIKitUser user){
+  //           //
+  //           //     }
+  //           // ),
+  //           onCallEnd: (ZegoCallEndEvent event,  VoidCallback defaultAction,){
+  //             String teacherId = currentCallData?.invitees.isNotEmpty == true
+  //                 ? currentCallData!.invitees.first
+  //                 : '1';  // Default to '1' if no invitee
+  //
+  //             String callType = currentCallData?.callType??"voiceCall";
+  //             scheduleCall(
+  //               phone: profile.studentProfile.phone ?? '',
+  //               teacherId: teacherId,
+  //               date: DateTime.now().toString().split(' ')[0],
+  //               time: DateTime.now().toString().split(' ')[1].substring(0, 5),
+  //               callType: callType,
+  //             ).then((success) {
+  //               if (success) {
+  //                 Fluttertoast.showToast(
+  //                     msg: "Call ended successfully",
+  //                     toastLength: Toast.LENGTH_SHORT,
+  //                     gravity: ToastGravity.BOTTOM,
+  //                     timeInSecForIosWeb: 1,
+  //                     backgroundColor: Colors.green,
+  //                     textColor: Colors.white,
+  //                     fontSize: 16.0
+  //                 );
+  //               } else {
+  //                 Fluttertoast.showToast(
+  //                     msg: "Failed to end call",
+  //                     toastLength: Toast.LENGTH_SHORT,
+  //                     gravity: ToastGravity.BOTTOM,
+  //                     timeInSecForIosWeb: 1,
+  //                     backgroundColor: Colors.red,
+  //                     textColor: Colors.white,
+  //                     fontSize: 16.0
+  //                 );
+  //               }
+  //
+  //             }).catchError((onError){
+  //               Fluttertoast.showToast(
+  //                   msg: "Failed to end call: ${onError.toString()}",
+  //                   toastLength: Toast.LENGTH_SHORT,
+  //                   gravity: ToastGravity.BOTTOM,
+  //                   timeInSecForIosWeb: 1,
+  //                   backgroundColor: Colors.red,
+  //                   textColor: Colors.white,
+  //                   fontSize: 16.0
+  //               );
+  //             });
+  //             defaultAction();
+  //           },
+  //
+  //           // Modify your custom configurations here.
+  //           onHangUpConfirmation: (ZegoCallHangUpConfirmationEvent event,
+  //               /// defaultAction to return to the previous page
+  //               Future<bool> Function() defaultAction,
+  //               ) async {
+  //             return await showDialog(
+  //               context: event.context,
+  //               barrierDismissible: false,
+  //               builder: (BuildContext dialogContext) {
+  //                 return AlertDialog(
+  //                   backgroundColor: Colors.white,
+  //                   title:  Text("Confirm Disconnecting with teacher",
+  //                       style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w500,fontSize: 18)),
+  //                   content:  Text(
+  //                       "Are you sure do you want to end the call with teacher",
+  //                       style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w400,fontSize: 16)),
+  //                   actions: [
+  //                     TextButton(
+  //                       child:  Text("Cancel",
+  //                           style: GoogleFonts.poppins(color: Colors.black,fontWeight: FontWeight.w500,fontSize: 18)),
+  //                       onPressed: () => Navigator.of(dialogContext).pop(false),
+  //                     ),
+  //                     TextButton(
+  //                       child: Text("Exit", style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w500, fontSize: 18)),
+  //                       onPressed: () {
+  //                         Navigator.of(dialogContext).pop(true);
+  //                       },
+  //                     ),
+  //                   ],
+  //                 );
+  //               },
+  //             );
+  //           },
+  //         ),
+  //         requireConfig: (ZegoCallInvitationData data) {
+  //           currentCallData = ZegoCallData(
+  //               invitees: data.invitees.map((e) => e.id).toList(),
+  //               inviterName: data.inviter?.name,
+  //               callType:  data.type.name
+  //           );
+  //           var config = (data.invitees.length > 1)
+  //               ? ZegoCallInvitationType.videoCall == data.type
+  //               ? ZegoUIKitPrebuiltCallConfig.groupVideoCall()
+  //               : ZegoUIKitPrebuiltCallConfig.groupVoiceCall()
+  //               : ZegoCallInvitationType.videoCall == data.type
+  //               ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
+  //               : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall();
+  //
+  //
+  //           return config;
+  //         },
+  //       );
+  //
+  //       // Wait for the signaling plugin to connect
+  //       await ZegoUIKitSignalingPlugin().connectUser(
+  //         id: profile.studentProfile.email!,
+  //         name: profile.studentProfile.name!,
+  //       );
+  //     } catch (e) {
+  //       if (kDebugMode) {
+  //         print("Error initializing Zego service: $e");
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // Future<bool> scheduleCall({
+  //   required String phone,
+  //   required String teacherId,
+  //   required String date,
+  //   required String time,
+  //   required String callType,
+  // }) async {
+  //
+  //   const String baseUrl = '${Constants.baseUrl}callschedule.php?API-Key=${Constants.apiKey}';
+  //
+  //
+  //   final Uri uri = Uri.parse(baseUrl);
+  //
+  //
+  //   try {
+  //     final response = await http.post(
+  //       uri,
+  //       headers: <String, String>{
+  //         'Content-Type': 'application/json; charset=UTF-8',
+  //       },
+  //       body: jsonEncode(<String, String>{
+  //         'phone': phone,
+  //         'teacherid': teacherId,
+  //         'date': date,
+  //         'time': time,
+  //         'calltype': callType,
+  //       }),
+  //     );
+  //
+  //
+  //     if (response.statusCode == 200) {
+  //       return true;
+  //     } else {
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
 
   Future<void> _updateBalance() async {
     try {

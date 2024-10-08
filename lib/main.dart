@@ -75,11 +75,11 @@ Future<void> main()async {
 
   ZegoUIKitPrebuiltCallInvitationService().setNavigatorKey(navigatorKey);
 
-  ZegoUIKitPrebuiltCallInvitationService().setNavigatorKey(navigatorKey);
 
   // call the useSystemCallingUI
   ZegoUIKit().initLog().then((value) {
-    ZegoUIKitPrebuiltCallInvitationService().useSystemCallingUI(
+    ZegoUIKitPrebuiltCallInvitationService()
+        .useSystemCallingUI(
       [ZegoUIKitSignalingPlugin()],
     );
 

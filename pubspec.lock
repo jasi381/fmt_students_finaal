@@ -345,14 +345,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-  floating:
-    dependency: transitive
-    description:
-      name: floating
-      sha256: "62924c96915823ce955da32b26766e11583ce437990a601032191d6d4b0b0764"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -1465,10 +1457,10 @@ packages:
     dependency: "direct main"
     description:
       name: zego_uikit_prebuilt_call
-      sha256: "73d6f5575e4f06ce87381c1169c1924cb900adff29fb551f3b7431190865334c"
+      sha256: "1d0d116940710d88681dda8ea96087e957060428f7b80701b8b44df5460e4af4"
       url: "https://pub.dev"
     source: hosted
-    version: "4.16.2"
+    version: "4.14.3"
   zego_uikit_signaling_plugin:
     dependency: "direct main"
     description:
